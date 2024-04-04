@@ -1,4 +1,3 @@
-
 from tkinter import *
 from tkinter import ttk
 from tkinter import messagebox
@@ -17,8 +16,12 @@ style = ttk.Style()
 style.theme_use('default')
 style.configure("Treeview", background=get_rgb((118, 227, 131)), foreground="black")
 style.map('Treeview', background=[('selected', get_rgb((73, 140,81)))])
-
+def clear_root():
+    for widget in root.winfo_children():
+        widget.destroy()
+    show_menu(role=user_role)
 def show_employ():
+    clear_root()
     employ_frame = LabelFrame(root, text='Сотрудники').pack(pady=10)
 
     employ_scroll = Scrollbar(employ_frame)
@@ -72,6 +75,8 @@ def show_employ():
     update_employee_button = Button(employ_action_frame, text="Обновить", command=update_employ).grid(row=0, column=1, padx=10, pady=10)
 
 def show_shift():
+    clear_root()
+    
     shift_frame = LabelFrame(root, text='Смены').pack(pady=10)
 
     shift_scroll = Scrollbar(shift_frame).pack(side='right', fill='y')
@@ -91,6 +96,7 @@ def show_shift():
     records = cursor.fetchall()
     for row in records:
         shift_tree.insert('', 'end', values=row)
+        
 
     data_shift_frame = LabelFrame(root, text="Данные смены")
     data_shift_frame.pack(padx=10, pady=10, fill='both')
@@ -119,6 +125,7 @@ def show_shift():
 
 def show_menu(role):
     def show_order():
+        clear_root()
         order_frame = LabelFrame(root, text='Заказы')
         order_frame.pack(pady=10)
 
@@ -156,6 +163,7 @@ def show_menu(role):
         order_data_frame.pack(padx=20, pady=10, fill='both')
         action_order_frame = LabelFrame(root, text='Команды')
         action_order_frame.pack(pady=10)
+        
 
         if user_role=='Повар':
             table_entry = Entry(order_data_frame, state='readonly')
@@ -208,7 +216,6 @@ def show_menu(role):
     inf_menu.add_cascade(label='Выход')
     main_menu.add_cascade(label='Меню', menu=inf_menu)
     root.config(menu=main_menu)
-    show_order()
     
 
 
@@ -225,6 +232,7 @@ def show_login_window():
     login_var.grid(row=0, column=1)
     password_var = Entry(auth_frame)
     password_var.grid(row=1, column=1)
+    
 
     def auth():
         global user_role
@@ -327,6 +335,7 @@ def add_shift():
         messagebox.showinfo('Сообщение', 'Не удалось сохранить данные')
 def update_employ():
     selected_item = employ_tree.focus()
+    
 
     if not selected_item:
         messagebox.showerror("Ошибка", "Пожалуйста, выберите сотрудника для обновления")
