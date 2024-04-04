@@ -75,7 +75,7 @@ def show_shift():
     shift_frame = LabelFrame(root, text='Смены').pack(pady=10)
 
     shift_scroll = Scrollbar(shift_frame).pack(side='right', fill='y')
-    shift_tree = ttk.Treeview(shift_frame, yscrollcommand=shift_scroll.set, selectmode='extended').pack()
+    shift_tree = ttk.Treeview(shift_frame, yscrollcommand=shift_scroll, selectmode='extended').pack()
     shift_scroll.config(command=shift_tree.yview)
 
     shift_tree['columns'] = ('ID', 'employees')
