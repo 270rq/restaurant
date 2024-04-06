@@ -28,6 +28,7 @@ cursor.execute('''CREATE TABLE IF NOT EXISTS orders (
 # Создаем таблицу смен (shift)
 cursor.execute('''CREATE TABLE IF NOT EXISTS shift (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    shift_type TEXT,  -- тип смены: "утреняя","вечерняя"
                     supervisor_id INTEGER,
                     FOREIGN KEY (supervisor_id) REFERENCES users(id)
                 )''')
