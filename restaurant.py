@@ -10,15 +10,12 @@ cursor = conn.cursor()
 root = Tk()
 root.title('Ресторан')
 root.geometry('600x600')
+root.minsize('800x800')
 font_style = ("Comic Sans MS", 10)
 root.option_add("*Font", font_style)
 
 def get_rgb(rgb):
     return "#%02x%02x%02x" % rgb 
-
-def validate_input(new_value):
-    return new_value.isdigit()
-    
 
 style = ttk.Style()
 style.theme_use('default')
@@ -33,10 +30,12 @@ def show_employ():
     clear_root()
     employ_frame = LabelFrame(root, text='Сотрудники')
     employ_frame.pack(pady=10)
-    icon = PhotoImage(file='icon.png')
 
-    icon_label = Label(root, image=icon)
-    icon_label.pack(side="left", padx=5)
+    image = Image.open('icon.png')
+    photo = ImageTk.PhotoImage(image)
+
+    icon_label = Label(employ_frame, image=photo)
+    icon_label.pack(side="right", padx=5)
 
     employ_scroll = Scrollbar(employ_frame)
     employ_scroll.pack(side=RIGHT, fill=Y)
@@ -191,14 +190,17 @@ def show_menu(role):
 
 
         cursor.execute('''
-        SELECT orders.id, orders.table_number, orders. count, orders.items, orders.status, users.username
+        SELECT orders.id, orders.table_number, orders. count, orders.items, orders.status, users.username, users.id
         FROM orders
         INNER JOIN users ON orders.supervisor_id = users.id
         ''')
+        employ_list=[]
+        employs_id = {}
         records = cursor.fetchall()
         for row in records:
             order_tree.insert('', 'end', values=row)
-            
+            employ_list.append(row[5])
+            employs_id[row[5]]=row[6]
 
         order_data_frame = LabelFrame(root, text='Данные о заказе')
         order_data_frame.pack(padx=20, pady=10, fill='both')
@@ -208,27 +210,27 @@ def show_menu(role):
         if user_role=='Повар':
             table_entry = Entry(order_data_frame, state='readonly')
             user_entry = Entry(order_data_frame,state='readonly')
-            status_entry = Entry(order_data_frame)
-            status_entry.grid(row=2, column=0, padx=5, pady=5)
             Label(order_data_frame, text='Номер столика').grid(row=0, column=0, padx=5, pady=5)
-            Label(order_data_frame, text='Количество гостей').grid(row=0, column=2, padx=5, pady=5)
-            Label(order_data_frame, text='Список заказа').grid(row=1, column=0, padx=5, pady=5)
-            Label(order_data_frame, text='Сотрудник').grid(row=1, column=2, padx=5, pady=5)
+            Label(order_data_frame, text='Количество гостей').grid(row=0, column=1, padx=5, pady=5)
+            Label(order_data_frame, text='Список заказа').grid(row=0, column=2, padx=5, pady=5)
+            Label(order_data_frame, text='Сотрудник').grid(row=0, column=3, padx=5, pady=5)
+            Label(order_data_frame, text='Статус заказа').grid(row=0, column=4, padx=5, pady=5)
             count_entry = Entry(order_data_frame, state='readonly')
-            count_entry.grid(row=0, column=3, padx=5, pady=5)
+            count_entry.grid(row=1, column=1, padx=5, pady=5)
             item_entry = Entry(order_data_frame, state='readonly')
-            item_entry.grid(row=1, column=1, padx=5, pady=5)
-            table_entry.grid(row=0, column=1, padx=5, pady=5)
+            item_entry.grid(row=1, column=2, padx=5, pady=5)
+            table_entry.grid(row=1, column=0, padx=5, pady=5)
+            status_order = ttk.Combobox(order_data_frame, values=('Готов','Готовится'), state='readonly')
+            status_order.grid(row=1, column=4, padx=5, pady=5)
             user_entry.grid(row=1, column=3, padx=5, pady=5)
             order_tree.bind('<<TreeviewSelect>>',lambda event: show_selected_item_order(event,order_tree,table_entry,count_entry,item_entry,user_entry,status_order))
-            update_order_button = Button(action_order_frame, background=get_rgb((73, 140,81)), text='Обновить', command=update_status(status_order, order_tree)).grid(row=4, column=0, padx=5, pady=5)
 
-            status_order = ttk.Combobox(order_data_frame, values=('Готов','Готовится'), state='readonly').grid(row=3, column=1, padx=5, pady=5)
+            Button(action_order_frame, background=get_rgb((73, 140,81)), text='Обновить', command=lambda: update_status(status_order, order_tree)).grid(row=4, column=0, padx=5, pady=5)
+
+
         elif user_role=='Официант':
-            vcmd = (order_data_frame.register(validate_input), '%P')
-           
             Label(order_data_frame, text='Номер столика').grid(row=1, column=0, padx=5, pady=5)
-            table_entry = Entry(order_data_frame, validate='key', validatecommand=vcmd)
+            table_entry = Entry(order_data_frame)
             table_entry.grid(row=2, column=0, padx=5, pady=5)
             Label(order_data_frame, text='Количество гостей').grid(row=1, column=2, padx=5, pady=5)
             count_entry = Entry(order_data_frame)
@@ -237,14 +239,14 @@ def show_menu(role):
             item_entry = Entry(order_data_frame)
             item_entry.grid(row=2, column=4, padx=5, pady=5)
             Label(order_data_frame, text='Сотрудник').grid(row=1, column=6, padx=5, pady=5)
-            user_entry = Entry(order_data_frame, validate='key', validatecommand=vcmd)
+            user_entry = ttk.Combobox(order_data_frame, values=employ_list)
             user_entry.grid(row=2, column=6, padx=5, pady=5)
             Label(order_data_frame, text='Статус заказа').grid(row=1, column=8, padx=5, pady=5)
             status_order = ttk.Combobox(order_data_frame, values=['Принят','Оплачен'], state='readonly')
             status_order.grid(row=2, column=8, padx=5, pady=5)
-            order_tree.bind('<<TreeviewSelect>>',lambda event: show_selected_item_order(order_tree,table_entry,count_entry,item_entry,user_entry,status_order))
+            order_tree.bind('<<TreeviewSelect>>',lambda event: show_selected_item_order(event,order_tree,table_entry,count_entry,item_entry,user_entry,status_order))
             update_order_button = Button(action_order_frame, background=get_rgb((73, 140,81)), text='Обновить', command=lambda: update_status(status_order, order_tree)).grid(row=4, column=1, padx=5, pady=5)
-            add_order_button = Button(action_order_frame, background=get_rgb((73, 140, 81)), text='Добавить', command=lambda: add_order(table_entry, count_entry, item_entry, status_order, employ_list, order_tree))
+            add_order_button = Button(action_order_frame, background=get_rgb((73, 140, 81)), text='Добавить', command=lambda: add_order(table_entry, count_entry, item_entry, status_order, user_entry, order_tree,employs_id))
             add_order_button.grid(row=3, column=1, padx=5, pady=5)
 
         elif user_role=='Администратор':
@@ -300,6 +302,7 @@ def show_login_window():
 
 show_login_window()
 
+
 def show_selected_item_employ(event, employ_tree, name_entry, password_entry, role_combobox, status_combobox):
     selected_item = employ_tree.selection()  # Получаем выбранный элемент в TreeView
     if selected_item:  # Проверяем, что выбран хотя бы один элемент
@@ -331,7 +334,7 @@ def show_selected_item_order(event,order_tree,table_entry,count_entry,item_entry
             item_entry.insert(0, item_values[3])
             user_entry.delete(0, END)
             status_order.delete(0, END)
-            status_order.set(0, item_values[4])
+            status_order.set(item_values[4])
             user_entry.insert(0, item_values[5])
 def add_employ(name_entry,role_combobox,password_entry,status_combobox,employ_tree):
     name = name_entry.get()
@@ -390,12 +393,13 @@ def update_employ(name_entry, role_combobox, password_entry, status_combobox,emp
             cursor.execute("UPDATE users SET username=?, role=?, password=?, status=? WHERE id=?", (name, role, password, status, item_id))
             conn.commit()
 
+
             employ_tree.item(selected_item, text="", values=(item_id, name, password, role, status))
             messagebox.showinfo("Сообщение", "Данные обновлены!")
     except Exception as e:
         conn.rollback()
         messagebox.showerror("Ошибка", f"Не удалось обновить данные: {str(e)}")
-def add_order(table_entry, count_entry, item_entry, status_order, employ_list, order_tree):
+def add_order(table_entry, count_entry, item_entry, status_order, employ_list, order_tree,employs_id):
     table = table_entry.get()
     count = count_entry.get()
     item = item_entry.get()
@@ -405,7 +409,7 @@ def add_order(table_entry, count_entry, item_entry, status_order, employ_list, o
         messagebox.showinfo("Ошибка", "Пожалуйста, заполните все поля")
         return
     try:
-        cursor.execute("INSERT INTO orders (table_number, count, items, status, supervisor_id) VALUES (?, ?, ?, ?, ?)", (table, count, item, status, employ))
+        cursor.execute("INSERT INTO orders (table_number, count, items, status, supervisor_id) VALUES (?, ?, ?, ?, ?)", (table, count, item, status, employs_id[employ]))
         conn.commit()
         order_tree.insert('', 'end', values=(cursor.lastrowid, table, count, item, status, employ))
         messagebox.showinfo('Сообщение', 'Данные успешно сохранены')
@@ -426,15 +430,14 @@ def update_status(status_order,order_tree):
         return
 
     try:
-        item_id, old_status = order_tree.item(selected_item, "values")[0], order_tree.item(selected_item, "values")[4]
-        confirmation = messagebox.askyesno("Подтверждение", f"Вы уверены, что хотите обновить статус заказа {item_id} с '{old_status}' на '{status}'?")
+        old_values = order_tree.item(selected_item, "values")
+        confirmation = messagebox.askyesno("Подтверждение", f"Вы уверены, что хотите обновить статус заказа {old_values[0]} с '{old_values[4]}' на '{status}'?")
 
 
         if confirmation:
-            cursor.execute("UPDATE orders SET status=? WHERE id=?", (status, item_id))
+            cursor.execute("UPDATE orders SET status=? WHERE id=?", (status, old_values[0]))
             conn.commit()
-
-            order_tree.item(selected_item, values=(item_id, old_status, '', '', status))
+            order_tree.item(selected_item, values=(old_values[0], old_values[1], old_values[2], old_values[3], status,old_values[5]))
             messagebox.showinfo("Сообщение", "Статус заказа успешно обновлен!")
     except Exception as e:
         conn.rollback()
